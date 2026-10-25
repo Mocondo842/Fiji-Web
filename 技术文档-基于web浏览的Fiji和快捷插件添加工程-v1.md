@@ -1,6 +1,6 @@
 ---
 title: 基于 web 浏览的 Fiji 与快捷插件添加工程 技术文档
-版本: v1.5（v1.4 基础上回写 V13 <1G 层实测：TIFF 族可用、ND2/CZI/MRC/IMS 不支持；新增异常 #14 open+run 组合限制。修订记录见文末 §15）
+版本: v1.6（v1.5 基础上回写桌面端对照测试：V13 加桌面对照列（7/7 全开·BF 8.5）；S5 判通过（参数+像素抽样双一致）；批处理路径定版。修订记录见文末 §15）
 日期: 2026-10-25
 依据: imjoy-team/imagej.js 官方 README（一手）+ **master 源码核查（2026-10-25，GitHub API 通道：src/index.js、src/index.html、src/service-worker.js、src/zarrUtils.js、webpack.config.js、package.json；master 最后 push 2025-08-21，应用版本 0.6.0）** + imagej.net 官方页 + image.sc 发布帖 + aicell.io 升级博客（2023-11-05）+ CheerpJ 官方文档/博客 + 本目录《方案调研-显微成像Fiji管线-v1》
 状态: 文档产出，未在任何机器实测部署；凡标「待确认 / 待实测」的条目不得当结论引用。凡标「（源码）」的为源码级结论，仍以 V 清单冒烟为准
@@ -218,7 +218,7 @@ npm run serve          # 开发态冒烟：webpack-dev-server，0.0.0.0:9090（w
 - **S2 一键宏（US2）**：Given 门户页含「Stack→Images」一键链接与内置样例图 URL，When 点击链接，Then ImageJ.JS 打开并自动执行宏，出现结果窗口，无需任何手动输入。
 - **S3 桌面按钮栏（US2）**：Given `plugins/ActionBar/my_tools.ijm` 已配置且 Startup 已挂 AutoRun，When 启动桌面 Fiji，Then 按钮栏自动出现且每个按钮执行对应命令成功。
 - **S4 大文件分流（US3）**：Given 一个 >R1 门槛的真实大文件且 L1 输出目录已由同一 Nginx 以 http 下发（vizarr 同源自托管），When 用户按门户页指引操作，Then 产出可被 vizarr 打开的 OME-Zarr，且 web 端未尝试直接加载该大文件。
-- **S5 双端复用（G2）**：Given `common/` 中任一宏与同一输入样例，When 分别在 web 与桌面执行，Then 输出图像尺寸/位深一致且抽样像素值一致。
+- **S5 双端复用（G2）**：Given `common/` 中任一宏与同一输入样例，When 分别在 web 与桌面执行，Then 输出图像尺寸/位深一致且抽样像素值一致。**✅ 通过（2026-10-25）**：tif_plain 双端参数完全一致（2048×2048 bit16 ch1 z2 t1），像素抽样三点一致（50/51/53）；桌面 headless 批处理通道同步验证通过。详见《复核记录-桌面端对照》。
 
 ---
 
@@ -259,7 +259,7 @@ npm run serve          # 开发态冒烟：webpack-dev-server，0.0.0.0:9090（w
 | V10 | viewZarr 打开 L1 产出的 OME-Zarr | 取方案调研阶段 2 的产物 + crop 参数 | 两工程桥接的可运行证明 |
 | V11 | `openVirtualStack` 中量级文件 | 数 GB 级实测（需先写一个小型 getSlice 供给插件——JS API，源码注释明示） | 明确「实验性」的真实可用度 |
 | V12 | http 内网下线程/性能降级评估 | 对照 HTTPS + COOP/COEP 环境 | 决定是否上内网证书 |
-| V13 | web 端格式支持面 | **✅ <1G 层已测（2026-10-25，真实样本库 7 格式样本）**：TIFF 族（普通/OME-TIFF/RGB 多通道）全部可用；**ND2 / CZI / MRC / IMS 全部不支持**（HTTP 200 取到但无解码，无 Bio-Formats）——N5 边界实测坐实 | 分级测试记录见《复核记录-图像格式测试V13》；1G–10G 层待特殊需要、>10G（79.4G czi）待指定；V15 若成（Bio-Formats 直载）需全部重测 |
+| V13 | web 端格式支持面 | **✅ <1G 层已测（2026-10-25，真实样本库 7 格式样本）**：TIFF 族（普通/OME-TIFF/RGB 多通道）全部可用；**ND2 / CZI / MRC / IMS 全部不支持**（HTTP 200 取到但无解码，无 Bio-Formats）——N5 边界实测坐实。**桌面对照（同日）**：桌面 Fiji（1.54p99 + Bio-Formats 8.5）**7/7 全开**（含 CZI ch3 z18）——缺口锁定在 web 基座 | 分级测试记录见《复核记录-图像格式测试V13》《复核记录-桌面端对照》；1G–10G 层待特殊需要、>10G（79.4G czi）待指定；V15 若成（Bio-Formats 直载）需全部重测 |
 | V14 | 出网依赖复核（从真实内网客户机） | 在一台 192.168.1.x 客户机测 cjrtnc / cdnjs 可达性与首载耗时；对照本机先验（2026-10-25：cjrtnc 0.68s 可达、cdnjs 可达经香港节点、jsdelivr 被重置但非必需、skypack GET 可达〔HEAD 会误报 404〕） | （源码 + 实测）静态文件局域网化不改变「浏览器首载需公网拉 CheerpJ 运行时」；网段出网正常即免本地化，完全隔离才需本地化改造 |
 | V15 | **基线迁移评估**（aicell 新版线 CheerpJ 4.2 vs 现行 CJ2） | 冒烟新版（ij.aicell.io 或自建）：① ImageJ1 版本（源码 pinned 2025-11-21 commit，1.54 系）；② 任意 Fiji 插件直载验证（MorphoLibJ 已官方实证）；③ **Bio-Formats 直载 + 真实 CZI**（联动 V13，结论可能改写）；④ Chrome/Edge 原生目录挂载与 >4GB；⑤ 快捷化参数差异（新版 URL 参数为 `mount`/`plugins.dir`，`?run=`/`install-macro` 行为需重验）；⑥ 服务器 Range 头要求；⑦ CheerpJ 非商业许可确认 | 2026-10-25 人工复核 Q2/Q4 调研结论：版本同步与「补 Fiji 功能差」的正解大概率是换基线而非在 CJ2 线上追 |
 
@@ -382,6 +382,14 @@ npm run serve          # 开发态冒烟：webpack-dev-server，0.0.0.0:9090（w
 2. 新知（异常 #14）：`?open=&run=` 组合参数中 run 不执行（open 的 await 未返回）；用 `?install-macro=` 预装 + 菜单执行替代。
 3. 样本库分级：E:\wx\测试文件\ 33 文件 → <1G×29（已测代表性 7 个）/ 1G–10G×3（待特殊需要）/ >10G×1（79.4G czi，待指定）。
 4. V15 优先级上调：若 aicell 新版线 Bio-Formats 直载成立，V13 全部 ❌ 项需重测。
+
+**v1.6（2026-10-25，桌面端对照测试回写；详见《复核记录-桌面端对照》）**
+
+1. 桌面环境就位：本地 Fiji 2.18.0/1.54p99 + Bio-Formats 8.5.0 全套；批处理通道定版 = `fiji.bat --headless --console -batch` + `File.append` 落盘（GUI 版 exe 不回传 stdout）。
+2. 用途三合一达成：① 批处理路径 ✅（宏库三宏串行全过，单一来源复用）；② 完备性对照：web 3/7 vs 桌面 7/7（ND2/CZI/MRC/IMS 桌面全开，openImage 层为 BF 自动接管）；③ 问题定位框架固化（桌面✅web❌→基座缺口；双❌→宏/数据；双✅用户❌→部署层）。
+3. S5 判通过：双端参数级一致 + 像素抽样一致；web 端像素通道 = `ij.getPixels` API 直读（runMacro return 不落地为已知怪癖）。
+4. S3 文件已部署至 `C:\Users\sr123\APP\Fiji\plugins\ActionBar\`（扁平布局，无 Fiji.app 目录）；GUI 验收与 Startup 配置待图形界面。
+5. 版本代差入档：web 1.53m99 vs 桌面 1.54p99（桌面已进 1.54 系）。
 
 ---
 
