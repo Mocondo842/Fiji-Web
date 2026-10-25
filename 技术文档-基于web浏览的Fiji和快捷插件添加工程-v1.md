@@ -1,6 +1,6 @@
 ---
 title: 基于 web 浏览的 Fiji 与快捷插件添加工程 技术文档
-版本: v1.6（v1.5 基础上回写桌面端对照测试：V13 加桌面对照列（7/7 全开·BF 8.5）；S5 判通过（参数+像素抽样双一致）；批处理路径定版。修订记录见文末 §15）
+版本: v1.7（v1.6 基础上回写 R4 决策轮：V15 4a 公网冒烟完成，插件清单证实 Bio-Formats 7.0.1 内置；D1 建议=有条件迁移（双轨）。修订记录见文末 §15）
 日期: 2026-10-25
 依据: imjoy-team/imagej.js 官方 README（一手）+ **master 源码核查（2026-10-25，GitHub API 通道：src/index.js、src/index.html、src/service-worker.js、src/zarrUtils.js、webpack.config.js、package.json；master 最后 push 2025-08-21，应用版本 0.6.0）** + imagej.net 官方页 + image.sc 发布帖 + aicell.io 升级博客（2023-11-05）+ CheerpJ 官方文档/博客 + 本目录《方案调研-显微成像Fiji管线-v1》
 状态: 文档产出，未在任何机器实测部署；凡标「待确认 / 待实测」的条目不得当结论引用。凡标「（源码）」的为源码级结论，仍以 V 清单冒烟为准
@@ -261,7 +261,7 @@ npm run serve          # 开发态冒烟：webpack-dev-server，0.0.0.0:9090（w
 | V12 | http 内网下线程/性能降级评估 | 对照 HTTPS + COOP/COEP 环境 | 决定是否上内网证书 |
 | V13 | web 端格式支持面 | **✅ <1G 层已测（2026-10-25，真实样本库 7 格式样本）**：TIFF 族（普通/OME-TIFF/RGB 多通道）全部可用；**ND2 / CZI / MRC / IMS 全部不支持**（HTTP 200 取到但无解码，无 Bio-Formats）——N5 边界实测坐实。**桌面对照（同日）**：桌面 Fiji（1.54p99 + Bio-Formats 8.5）**7/7 全开**（含 CZI ch3 z18）——缺口锁定在 web 基座 | 分级测试记录见《复核记录-图像格式测试V13》《复核记录-桌面端对照》；1G–10G 层待特殊需要、>10G（79.4G czi）待指定；V15 若成（Bio-Formats 直载）需全部重测 |
 | V14 | 出网依赖复核（从真实内网客户机） | 在一台 192.168.1.x 客户机测 cjrtnc / cdnjs 可达性与首载耗时；对照本机先验（2026-10-25：cjrtnc 0.68s 可达、cdnjs 可达经香港节点、jsdelivr 被重置但非必需、skypack GET 可达〔HEAD 会误报 404〕） | （源码 + 实测）静态文件局域网化不改变「浏览器首载需公网拉 CheerpJ 运行时」；网段出网正常即免本地化，完全隔离才需本地化改造 |
-| V15 | **基线迁移评估**（aicell 新版线 CheerpJ 4.2 vs 现行 CJ2） | 冒烟新版（ij.aicell.io 或自建）：① ImageJ1 版本（源码 pinned 2025-11-21 commit，1.54 系）；② 任意 Fiji 插件直载验证（MorphoLibJ 已官方实证）；③ **Bio-Formats 直载 + 真实 CZI**（联动 V13，结论可能改写）；④ Chrome/Edge 原生目录挂载与 >4GB；⑤ 快捷化参数差异（新版 URL 参数为 `mount`/`plugins.dir`，`?run=`/`install-macro` 行为需重验）；⑥ 服务器 Range 头要求；⑦ CheerpJ 非商业许可确认 | 2026-10-25 人工复核 Q2/Q4 调研结论：版本同步与「补 Fiji 功能差」的正解大概率是换基线而非在 CJ2 线上追 |
+| V15 | **基线迁移评估**（aicell 新版线 CheerpJ 4.2 vs 现行 CJ2） | **4a 公网冒烟已完成（2026-10-25，见《复核记录-R4决策轮V15》）**：插件清单证实内置 Bio-Formats 7.0.1 全包 + MorphoLibJ/ThunderSTORM/DeepImageJ/**Action Bar jar**；⚠️ 首载约 3 分钟（CJ2 线 35s）、openImage 单文件 ~1 分钟（公网实测）；格式直测未打通（路径/桥细节，非格式结论）。**D1 建议 = 有条件迁移（双轨）**；剩余：R4' 自建环境实测（性能定标 + BF 格式实测 + Range 头 + 快捷化参数适配——新线无 `?run=`/`install-macro` 等价物）+ 4c 许可确认 | 版本同步与「补 Fiji 功能差」的正解大概率是换基线；性能是最大变数 |
 
 # 10. 待确认事项（留白，未核实不写结论）
 
@@ -390,6 +390,13 @@ npm run serve          # 开发态冒烟：webpack-dev-server，0.0.0.0:9090（w
 3. S5 判通过：双端参数级一致 + 像素抽样一致；web 端像素通道 = `ij.getPixels` API 直读（runMacro return 不落地为已知怪癖）。
 4. S3 文件已部署至 `C:\Users\sr123\APP\Fiji\plugins\ActionBar\`（扁平布局，无 Fiji.app 目录）；GUI 验收与 Startup 配置待图形界面。
 5. 版本代差入档：web 1.53m99 vs 桌面 1.54p99（桌面已进 1.54 系）。
+
+**v1.7（2026-10-25，R4 决策轮回写；详见《复核记录-R4决策轮V15》）**
+
+1. V15 4a 公网冒烟完成：ij.aicell.io 可运行（CheerpJ 4.2，cjrtnc CDN 可达）；**插件清单证实内置 Bio-Formats 7.0.1 全包 + MorphoLibJ/ThunderSTORM/DeepImageJS/Action Bar jar**——V13 四个 ❌ 大概率可翻盘，且 Action Bar 可复刻到 web。
+2. 性能警示：首载约 3 分钟（CJ2 线 35s）；openImage 公网实测单文件约 1 分钟（解释执行、单线程）——性能为迁移最大变数。
+3. 格式直测未打通（openImage 返回 NULL 含 TIFF——路径/桥细节问题，非格式结论）；自动化通道确认：window.lib Java 桥（`await window.lib.ij.IJ` 模式）+ 合成拖放喂文件。
+4. D1 建议：**有条件迁移（双轨过渡）**——CJ2 线保持生产主力；迁移前置三项（自建性能定标 / BF 格式实测 / 快捷化参数适配——新线无 ?run=/install-macro 等价物）+ 4c 许可确认，归入新 R4' 轮。
 
 ---
 
