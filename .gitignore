@@ -1,0 +1,15 @@
+# 测试数据不入库（本地 E:\wx\测试文件\ + 服务器 testdata 镜像）
+testdata/
+*.tif
+*.czi
+*.nd2
+*.ims
+*.mrc
+# 构建产物不入库（见部署-overlay 构建脚本）
+node_modules/
+dist/
+*.tar.gz
+*.tgz
+# 截图/临时
+*.png.tmp
+~$*

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>课题组 ImageJ 门户 — 快捷宏入口</title>
+<style>
+  body { font-family: "Microsoft YaHei", system-ui, sans-serif; max-width: 860px; margin: 24px auto; padding: 0 16px; color: #222; }
+  h1 { font-size: 1.4em; border-bottom: 2px solid #2c6fbb; padding-bottom: 8px; }
+  h2 { font-size: 1.1em; margin-top: 28px; color: #2c6fbb; }
+  .btn { display: inline-block; margin: 6px 10px 6px 0; padding: 10px 16px; background: #2c6fbb; color: #fff; text-decoration: none; border-radius: 6px; font-size: 15px; }
+  .btn.alt { background: #4a8a3f; }
+  .btn.ghost { background: #777; }
+  .note { background: #f4f7fb; border-left: 4px solid #2c6fbb; padding: 10px 14px; font-size: 14px; line-height: 1.7; }
+  .warn { background: #fdf3f0; border-left: 4px solid #c0392b; padding: 10px 14px; font-size: 14px; line-height: 1.7; }
+  code { background: #eef1f5; padding: 1px 5px; border-radius: 3px; }
+</style>
+</head>
+<body>
+<h1>课题组 ImageJ 门户（web 版）</h1>
+
+<p class="note">
+  建议使用 <b>Chrome 或 Firefox</b> 打开（官方仅在此两者测试过）。<br>
+  首次打开约需 1 分钟加载运行时，之后二次打开通常数秒内可用（缓存生效）。<br>
+  每个标签页是一个独立 ImageJ 实例，互不影响；关闭标签页前请先保存结果。
+</p>
+
+<h2>如何导入你的图像（正式使用必读）</h2>
+<p class="note">
+  打开 <b>ImageJ.JS</b> 后，三种导入方式任选其一：
+  ① <b>菜单导入</b>：File &gt; Open / Import…，可选择<b>本机文件或已映射的共享盘文件</b>（推荐先把共享盘映射为本机盘符）；
+  ② <b>拖拽 / 粘贴</b>：把图像文件直接拖入页面，或复制图像后在页面 Ctrl+V；
+  ③ <b>链接导入</b>：用 <code>?open=&lt;图片URL&gt;</code> 参数打开服务器上的图像。
+  处理结果请按下方「保存结果」说明导出。
+</p>
+
+<h2>一键运行宏（点击即执行）</h2>
+<p>宏会作用于<b>当前已打开的图像</b>；若打开时尚无任何图像，将自动生成一张 256×256 渐变样例图兜底（便于快速试用功能——正式使用请先按上方指引导入你的图像）：</p>
+<div id="run-links"></div>
+
+<h2>装入常用宏到菜单（每台设备点一次）</h2>
+<p>点击后常用工具将出现在 ImageJ 的 <code>Plugins &gt; Macros</code> 菜单，本次会话内可从菜单反复调用：</p>
+<div id="install-links"></div>
+
+<h2>打开空白 ImageJ</h2>
+<div><a class="btn ghost" id="plain-link">打开 ImageJ.JS</a></div>
+
+<h2>保存结果（重要）</h2>
+<p class="warn">
+  web 端保存请使用<strong>保存对话框</strong>（宏中无路径的 <code>saveAs("Tiff")</code>，或菜单 File &gt; Save As），
+  文件将下载到本机下载目录。<strong>不要</strong>让宏写死保存路径——那样文件会留在浏览器内部，你拿不到。
+</p>
+
+<h2>大文件请勿在 web 端打开</h2>
+<p class="warn">
+  单文件解压后像素数据 <b>&gt; 2GB</b> 的图像请走服务器端 L1 管线（bioformats2raw → OME-Zarr），
+  再用 vizarr 查看产物。<b>100GB 级为永久禁区</b>（浏览器内存墙）。<br>
+  管线使用方式：联系管理员提交任务（提交口径见内部 wiki；vizarr 查看入口在管线就绪后开放）。
+</p>
+
+<h2>快捷键提示</h2>
+<p class="note">自定义快捷键不要使用 <kbd>Ctrl</kbd> 组合键（浏览器会拦截）；建议用单字母或 <kbd>Alt</kbd> 组合。</p>
+
+<script>
+  // R6：所有链接由单一 base（当前源）动态生成，未来迁移 https 只改一处（location.origin 自动跟随）
+  const BASE = location.origin;
+  const COMMON = BASE + "/macros/common/";
+  const PAGE = BASE + "/index.html";
+
+  const runMacros = [
+    ["栈 → 系列图", "01_stack2images.ijm"],
+    ["增强对比度", "02_enhance_contrast.ijm"],
+    ["图像反相", "03_invert_image.ijm"]
+  ];
+  const runBox = document.getElementById("run-links");
+  runMacros.forEach(([label, file]) => {
+    const a = document.createElement("a");
+    a.className = "btn";
+    a.textContent = label;
+    a.href = PAGE + "?run=" + encodeURIComponent(COMMON + file);
+    a.target = "_blank";
+    runBox.appendChild(a);
+  });
+
+  const instBox = document.getElementById("install-links");
+  const inst = document.createElement("a");
+  inst.className = "btn alt";
+  inst.textContent = "装入常用宏（Plugins > Macros）";
+  inst.href = PAGE + "?install-macro=" + encodeURIComponent(COMMON + "00_common_tools.ijm");
+  inst.target = "_blank";
+  instBox.appendChild(inst);
+
+  document.getElementById("plain-link").href = PAGE;
+</script>
+</body>
+</html>
