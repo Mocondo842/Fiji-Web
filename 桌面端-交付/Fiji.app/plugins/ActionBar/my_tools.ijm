@@ -35,4 +35,10 @@ if (nImages==0) newImage("SampleStack", "8-bit ramp", 256, 256, 1, 1, 5);
 run("Z Projection...", "projection=[Max Intensity]");
 </macro>
 </button>
+<button>
+label=Batch TIF
+arg=<macro>
+runMacro("C:/Users/sr123/ijweb/macros/common/06_batch_tif.ijm");
+</macro>
+</button>
 </line>

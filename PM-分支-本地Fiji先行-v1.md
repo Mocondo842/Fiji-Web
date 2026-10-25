@@ -82,7 +82,40 @@ title: PM 分支文件 — 本地 Fiji 先行（原项目能力的桌面端实�
 | B3 大文件管线 L1 | bioformats2raw 首转（M4，样本待确认）+ 校验 + 桌面核验 | BS4 |
 | B4 打包与交接 | 安装说明成稿、宏库分发方式（共享盘/update site〔待确认〕）、回归清单固化 | BS5 + 文档 |
 
-# 8. 待确认事项（留白，未核实不写结论）
+# 9. action-bar+常用宏功能（增量节，2026-10-25 人工复核 3 条后增补）
+
+> 背景：人工复核指出 B1 按钮栏未弹出、N5 入口找不到、B2/B3 缺用户步骤且应由 B1 实现。三项已修复，本节为按钮栏+常用宏的**用户操作口径**（持续增量维护）。
+
+## 9.1 按钮栏（6 键，桌面「启动Fiji(带按钮栏)」启动后自动出现在屏幕顶部）
+
+| 按钮 | 功能 | 输入要求 | 对应宏（单一来源） |
+| :-- | :-- | :-- | :-- |
+| Stack->Images | 栈转系列图（无图自动出样例） | 任意打开的图像或空 | `01_stack2images.ijm` |
+| Enhance Contrast | 增强对比度（saturated=0.35） | 同上 | `02_enhance_contrast.ijm` |
+| Invert | 反相 | 同上 | `03_invert_image.ijm` |
+| Split Channels | RGB 拆通道 | RGB 图或空 | `04_split_channels.ijm` |
+| Z Projection | Z 投影（Max Intensity） | 栈或空 | `05_z_projection.ijm` |
+| **Batch TIF** | **B2 批处理入口**：弹窗选输入目录 → 逐个 TIFF 处理（当前=Invert，宏内一行可改）→ 存 `<输入>/out/` → 完成弹统计 | TIFF 族目录 | `06_batch_tif.ijm`（按钮只含一行 runMacro，BR8 标准形态） |
+
+## 9.2 B2 批处理——两种形态
+
+| 形态 | 用法 | 适用 |
+| :-- | :-- | :-- |
+| **按钮（日常）** | 点按钮栏 Batch TIF → 选目录 → 等完成弹窗 | TIFF 族、交互使用 |
+| **headless 脚本（鲁棒）** | 改 `ijweb\headless\batch_run.py` 头部三常量 → `fiji.bat --headless --console --run batch_run.py` → 看 CSV 结果 | 全格式（含 czi/nd2/ims/mrc）+ 损坏件容错（BS3 已证） |
+
+## 9.3 B3 大文件→OME-Zarr——拖拽即转 + 查看
+
+- **转换（由桌面入口实现，拖拽操作）**：把任意显微文件（czi/ims/nd2/tif…）**拖到桌面「转OME-Zarr」图标**上 → 源文件旁生成 `<同名>.ome.zarr`（5 级金字塔；1.66G 样本约 2 分钟，内存 12G 上限）。
+- **查看（Fiji 内）**：`File > Import > HDF5/N5/Zarr/OME-NGFF ...`（**注意：菜单名不含单独的"N5"项，全名如上**）→ 在文件选择器里选中 `.ome.zarr` 目录 → 打开。
+- 大于 10G 的文件按约定先经用户指定再转（红线：机器 31G 内存）。
+
+## 9.4 本节维护规则
+
+- 新宏入库（BR1 准入）→ 本表加一行 → 按钮栏加一键（一行 runMacro 形态）→ 重启 Fiji 生效（全程 ≤10 分钟，BS5）。
+- 按钮参数口径（登记）：Action Bar 的 `run("Action Bar", 参数)` **只认相对 `plugins/ActionBar/` 的文件名**；绝对路径会被静默忽略（B1 问题的根因，2026-10-25 实测钉死）。
+
+# 10. 待确认事项（留白，未核实不写结论；原 §8 顺延）
 
 1. 共享盘 UNC 路径与权限（与主线 R9 同源，待 IT）。
 2. 常用宏清单（≥5 的具体条目——待课题组征集；当前仅有样例 3 个）。
