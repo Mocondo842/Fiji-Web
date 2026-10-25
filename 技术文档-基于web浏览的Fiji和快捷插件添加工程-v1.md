@@ -1,6 +1,6 @@
 ---
 title: 基于 web 浏览的 Fiji 与快捷插件添加工程 技术文档
-版本: v1.4（v1.3 基础上并入阶段 1 人工复核 5 项调研结论：ImageJ1 官网迁移、版本同步路径（aicell 新版线/V15）、CheerpJ 32 位 Java 8 实测口径、Fiji 替换可行性、门户导入指引。修订记录见文末 §15）
+版本: v1.5（v1.4 基础上回写 V13 <1G 层实测：TIFF 族可用、ND2/CZI/MRC/IMS 不支持；新增异常 #14 open+run 组合限制。修订记录见文末 §15）
 日期: 2026-10-25
 依据: imjoy-team/imagej.js 官方 README（一手）+ **master 源码核查（2026-10-25，GitHub API 通道：src/index.js、src/index.html、src/service-worker.js、src/zarrUtils.js、webpack.config.js、package.json；master 最后 push 2025-08-21，应用版本 0.6.0）** + imagej.net 官方页 + image.sc 发布帖 + aicell.io 升级博客（2023-11-05）+ CheerpJ 官方文档/博客 + 本目录《方案调研-显微成像Fiji管线-v1》
 状态: 文档产出，未在任何机器实测部署；凡标「待确认 / 待实测」的条目不得当结论引用。凡标「（源码）」的为源码级结论，仍以 V 清单冒烟为准
@@ -239,6 +239,7 @@ npm run serve          # 开发态冒烟：webpack-dev-server，0.0.0.0:9090（w
 | 11 | 结果文件散落各设备 | 命名规范（日期_设备_内容）+ 共享盘统一回收目录 |
 | 12 | 内网 http 下 CheerpJ 3 多线程不可用（secure context 限制） | 降级单线程仍可用（此半句官方文档无表述，V12 实测裁决）；是否值得上内网自签 HTTPS 由 V2/V12 结果决定 |
 | 13 | 外部 CDN 不可达（cjrtnc / cdnjs 必需项；jsdelivr / GA 非必需项） | （源码 + 实测）**只有 cjrtnc（CheerpJ 运行时）与 cdnjs（CodeMirror）不可达才致命**：cjrtnc 不可达 = 整站无法启动，cdnjs 缺失影响脚本编辑器；pwacompat（jsdelivr）与 GA 失败不致命（异步增强/遥测）。2026-10-25 本机实测：必需项均可达、jsdelivr 被重置但非必需。预案：V14 从内网客户机复核；若网段完全隔离 → 本地化进 dist（镜像 cjrtnc `20201217_2` 目录 + 替换 index.html 外链；cnij 镜像不是离线方案） |
+| 14 | `?open=<图像>&run=<宏>` 组合参数（2026-10-25 V13 实测新知） | **run 不执行**（宏未被 fetch——open 的 await 未返回阻塞后续参数处理）。不受影响的路径：一键宏（自带样例兜底，S2 已证）、装菜单后菜单执行；需要「开图即跑宏」的场景用 `?install-macro=` 预装 + 菜单调用的组合替代 |
 
 ---
 
@@ -258,7 +259,7 @@ npm run serve          # 开发态冒烟：webpack-dev-server，0.0.0.0:9090（w
 | V10 | viewZarr 打开 L1 产出的 OME-Zarr | 取方案调研阶段 2 的产物 + crop 参数 | 两工程桥接的可运行证明 |
 | V11 | `openVirtualStack` 中量级文件 | 数 GB 级实测（需先写一个小型 getSlice 供给插件——JS API，源码注释明示） | 明确「实验性」的真实可用度 |
 | V12 | http 内网下线程/性能降级评估 | 对照 HTTPS + COOP/COEP 环境 | 决定是否上内网证书 |
-| V13 | web 端格式支持面 | TIFF / OME-TIFF / 一个真实 CZI 拖入实测 | 显微室用户第一反应就是拖 CZI，必须有实测口径（阶段 0 已旁证：URL 方式打开 PNG 无碍；本地拖入与 TIFF/CZI 留阶段 2） |
+| V13 | web 端格式支持面 | **✅ <1G 层已测（2026-10-25，真实样本库 7 格式样本）**：TIFF 族（普通/OME-TIFF/RGB 多通道）全部可用；**ND2 / CZI / MRC / IMS 全部不支持**（HTTP 200 取到但无解码，无 Bio-Formats）——N5 边界实测坐实 | 分级测试记录见《复核记录-图像格式测试V13》；1G–10G 层待特殊需要、>10G（79.4G czi）待指定；V15 若成（Bio-Formats 直载）需全部重测 |
 | V14 | 出网依赖复核（从真实内网客户机） | 在一台 192.168.1.x 客户机测 cjrtnc / cdnjs 可达性与首载耗时；对照本机先验（2026-10-25：cjrtnc 0.68s 可达、cdnjs 可达经香港节点、jsdelivr 被重置但非必需、skypack GET 可达〔HEAD 会误报 404〕） | （源码 + 实测）静态文件局域网化不改变「浏览器首载需公网拉 CheerpJ 运行时」；网段出网正常即免本地化，完全隔离才需本地化改造 |
 | V15 | **基线迁移评估**（aicell 新版线 CheerpJ 4.2 vs 现行 CJ2） | 冒烟新版（ij.aicell.io 或自建）：① ImageJ1 版本（源码 pinned 2025-11-21 commit，1.54 系）；② 任意 Fiji 插件直载验证（MorphoLibJ 已官方实证）；③ **Bio-Formats 直载 + 真实 CZI**（联动 V13，结论可能改写）；④ Chrome/Edge 原生目录挂载与 >4GB；⑤ 快捷化参数差异（新版 URL 参数为 `mount`/`plugins.dir`，`?run=`/`install-macro` 行为需重验）；⑥ 服务器 Range 头要求；⑦ CheerpJ 非商业许可确认 | 2026-10-25 人工复核 Q2/Q4 调研结论：版本同步与「补 Fiji 功能差」的正解大概率是换基线而非在 CJ2 线上追 |
 
@@ -374,6 +375,13 @@ npm run serve          # 开发态冒烟：webpack-dev-server，0.0.0.0:9090（w
 2. Q2/Q4：版本落后量化（基线 1.53m/2021 vs 最新 1.54t/2026-05）；**aicell 新版线（CheerpJ 4.2，ij.aicell.io，活跃维护，ImageJ1 源码 pinned 2025-11-21 commit 构建）**为版本同步与补 Fiji 功能差的可行路径——新增 **V15 基线迁移评估**（含 Bio-Formats/CZI 直载、原生目录挂载、Range 头、CheerpJ 非商业许可确认）。
 3. Q3：实测口径闭环——`java.version=1.8.0-internal`、`java.vm.name=CheerpJ`；CJ2 模拟 32 位 OpenJDK 8，32 位地址空间即 4GB 上限与 R1 门槛的根因；与桌面 Fiji 的 Java 21 无关。
 4. Q5：门户页已改版——「体验话术」替换为「如何导入你的图像」指引导块（File>Open/共享盘、拖拽粘贴、?open= 链接），样例图降级为无图兜底。
+
+**v1.5（2026-10-25，V13 <1G 层实测回写；详见《复核记录-图像格式测试V13》）**
+
+1. V13 定论：TIFF 族（普通/OME-TIFF/RGB 多通道）✅；ND2/CZI/MRC/IMS ❌（无 Bio-Formats，与 N5 一致）。R8 分流口径强化：web 端仅 TIFF 族，厂商格式一律指回管线/桌面。
+2. 新知（异常 #14）：`?open=&run=` 组合参数中 run 不执行（open 的 await 未返回）；用 `?install-macro=` 预装 + 菜单执行替代。
+3. 样本库分级：E:\wx\测试文件\ 33 文件 → <1G×29（已测代表性 7 个）/ 1G–10G×3（待特殊需要）/ >10G×1（79.4G czi，待指定）。
+4. V15 优先级上调：若 aicell 新版线 Bio-Formats 直载成立，V13 全部 ❌ 项需重测。
 
 ---
 
