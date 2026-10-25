@@ -20,4 +20,19 @@ if (nImages==0) newImage("SampleInvert", "8-bit ramp", 256, 256, 1);
 run("Invert");
 </macro>
 </button>
+<button>
+label=Split Channels
+arg=<macro>
+if (nImages==0) newImage("SampleRGB", "RGB black", 256, 256, 1, 3, 1);
+run("Fire");
+run("Split Channels");
+</macro>
+</button>
+<button>
+label=Z Projection
+arg=<macro>
+if (nImages==0) newImage("SampleStack", "8-bit ramp", 256, 256, 1, 1, 5);
+run("Z Projection...", "projection=[Max Intensity]");
+</macro>
+</button>
 </line>
