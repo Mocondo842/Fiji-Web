@@ -86,16 +86,19 @@ title: PM 分支文件 — 本地 Fiji 先行（原项目能力的桌面端实�
 
 > 背景：人工复核指出 B1 按钮栏未弹出、N5 入口找不到、B2/B3 缺用户步骤且应由 B1 实现。三项已修复，本节为按钮栏+常用宏的**用户操作口径**（持续增量维护）。
 
-## 9.1 按钮栏（6 键，桌面「启动Fiji(带按钮栏)」启动后自动出现在屏幕顶部）
+## 9.1 按钮栏（7 键，桌面「启动Fiji(带按钮栏)」启动后自动出现在屏幕顶部）
 
-| 按钮 | 功能 | 输入要求 | 对应宏（单一来源） |
+| 按钮 | 功能 | 输入要求 | 实现与对应宏 |
 | :-- | :-- | :-- | :-- |
-| Stack->Images | 栈转系列图（无图自动出样例） | 任意打开的图像或空 | `01_stack2images.ijm` |
-| Enhance Contrast | 增强对比度（saturated=0.35） | 同上 | `02_enhance_contrast.ijm` |
-| Invert | 反相 | 同上 | `03_invert_image.ijm` |
-| Split Channels | RGB 拆通道 | RGB 图或空 | `04_split_channels.ijm` |
-| Z Projection | Z 投影（Max Intensity） | 栈或空 | `05_z_projection.ijm` |
-| **Batch TIF** | **B2 批处理入口**：弹窗选输入目录 → 逐个 TIFF 处理（当前=Invert，宏内一行可改）→ 存 `<输入>/out/` → 完成弹统计 | TIFF 族目录 | `06_batch_tif.ijm`（按钮只含一行 runMacro，BR8 标准形态） |
+| Stack->Images | 栈转系列图（无图自动出样例） | 任意打开的图像或空 | 宏 `01_stack2images.ijm` |
+| Enhance Contrast | 增强对比度（saturated=0.35） | 同上 | 宏 `02_enhance_contrast.ijm` |
+| Invert | 反相 | 同上 | 宏 `03_invert_image.ijm` |
+| Split Channels | RGB 拆通道 | RGB 图或空 | 宏 `04_split_channels.ijm` |
+| Z Projection | Z 投影（Max Intensity） | 栈或空 | 宏 `05_z_projection.ijm` |
+| **Batch TIF** | **B2 批处理（2026-10-25 验收修正版）**：选目录 → 逐 TIFF 处理（默认 Invert）→ 存 `<输入>/out/` → **统计+失败清单弹窗** | TIFF 族目录 | **BeanShell 内建**（真 try/catch：单文件失败不中断——修复宏语言 `open()` 对部分 OME-TIFF 脆弱且无 try/catch 导致的"0 输出"缺陷） |
+| **Open Zarr** | **B3 查看入口**：粘贴/输入 `.ome.zarr` 目录路径 → 调 N5Importer（会弹一次 ImageJ2 确认框，点 OK 即开） | OME-Zarr 目录路径 | 宏内联（`run("HDF5/N5/Zarr/OME-NGFF ...", "n5=[路径]")`） |
+
+> 已废弃：`06_batch_tif.ijm`（纯宏版批处理）不再挂按钮——宏语言无 try/catch 且 `open()` 对个别 OME-TIFF 直接终止宏（2026-10-25 调试取证：第 2 个文件杀死宏循环）；鲁棒全格式批处理仍走 headless `batch_run.py`。
 
 ## 9.2 B2 批处理——两种形态
 
@@ -107,7 +110,7 @@ title: PM 分支文件 — 本地 Fiji 先行（原项目能力的桌面端实�
 ## 9.3 B3 大文件→OME-Zarr——拖拽即转 + 查看
 
 - **转换（由桌面入口实现，拖拽操作）**：把任意显微文件（czi/ims/nd2/tif…）**拖到桌面「转OME-Zarr」图标**上 → 源文件旁生成 `<同名>.ome.zarr`（5 级金字塔；1.66G 样本约 2 分钟，内存 12G 上限）。
-- **查看（Fiji 内）**：`File > Import > HDF5/N5/Zarr/OME-NGFF ...`（**注意：菜单名不含单独的"N5"项，全名如上**）→ 在文件选择器里选中 `.ome.zarr` 目录 → 打开。
+- **查看（Fiji 内，2026-10-25 验收修正）**：`File > Import > HDF5/N5/Zarr/OME-NGFF ...` 的选框是**文件选择器**、无法直接选 zarr 目录——**改用按钮栏「Open Zarr」**：输入/粘贴 `.ome.zarr` 目录路径 → 弹出的 ImageJ2 确认框点 OK 即打开（宏参数 `n5=[路径]` 实测触发命令；完全免点击形态待 N5Importer 参数集补全，留白）。
 - 大于 10G 的文件按约定先经用户指定再转（红线：机器 31G 内存）。
 
 ## 9.4 本节维护规则
