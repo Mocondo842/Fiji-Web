@@ -1,0 +1,9 @@
+DESKTOP_MATRIX_BEGIN ver=1.54p99
+RESULT tif_plain.tif OK-native 2048x2048 bit=16 ch=1 z=2 t=1
+RESULT tif_ome.ome.tif OK-native 2000x2000 bit=16 ch=1 z=1 t=1
+RESULT tif_rgb_3ch.tif OK-native 2000x2000 bit=24 ch=1 z=3 t=1
+RESULT nd2_sample.nd2 OK-native 1024x1024 bit=16 ch=2 z=3 t=1
+RESULT czi_sample.czi OK-native 1024x1024 bit=16 ch=3 z=18 t=1
+RESULT mrc_sample.mrc OK-native 2048x2048 bit=32 ch=1 z=2 t=1
+RESULT ims_small.ims OK-native 431x431 bit=16 ch=1 z=1 t=1
+DESKTOP_MATRIX_END

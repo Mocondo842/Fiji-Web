@@ -1,0 +1,12 @@
+file,status,seconds,output_or_error
+100 oil zoom 2-2.9.tif,OK,0.3,C:/Users/sr123/ijweb/B2_test_input/out/100 oil zoom 2-2.9_out.tif
+fake_corrupt.czi,FAIL,0.1,openImage returned null (unsupported/corrupt)
+h5_Multichannel_20261019_15230_raw_CH(CF405)_CH1.ome.tif,OK,0.5,C:/Users/sr123/ijweb/B2_test_input/out/h5_Multichannel_20261019_15230_raw_CH(CF405)_CH1.ome_out.tif
+h5_Multichannel_20261019_15230_raw_CH(CF561)_CH3.ome.tif,OK,0.1,C:/Users/sr123/ijweb/B2_test_input/out/h5_Multichannel_20261019_15230_raw_CH(CF561)_CH3.ome_out.tif
+ims_small.ims,OK,0.1,C:/Users/sr123/ijweb/B2_test_input/out/ims_small_out.tif
+mrc_sample.mrc,OK,0.3,C:/Users/sr123/ijweb/B2_test_input/out/mrc_sample_out.tif
+nd2_sample.nd2,OK,0.3,C:/Users/sr123/ijweb/B2_test_input/out/nd2_sample_out.tif
+tif_ome.ome.tif,OK,0.1,C:/Users/sr123/ijweb/B2_test_input/out/tif_ome.ome_out.tif
+tif_plain.tif,OK,0.2,C:/Users/sr123/ijweb/B2_test_input/out/tif_plain_out.tif
+tif_rgb_3ch.tif,OK,0.3,C:/Users/sr123/ijweb/B2_test_input/out/tif_rgb_3ch_out.tif
+SUMMARY,total=10,ok=9,fail=1
