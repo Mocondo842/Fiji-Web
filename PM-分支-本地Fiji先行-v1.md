@@ -86,7 +86,7 @@ title: PM 分支文件 — 本地 Fiji 先行（原项目能力的桌面端实�
 
 > 背景：人工复核指出 B1 按钮栏未弹出、N5 入口找不到、B2/B3 缺用户步骤且应由 B1 实现。三项已修复，本节为按钮栏+常用宏的**用户操作口径**（持续增量维护）。
 
-## 9.1 按钮栏（7 键，桌面「启动Fiji(带按钮栏)」启动后自动出现在屏幕顶部）
+## 9.1 按钮栏（6 键，桌面「启动Fiji(带按钮栏)」启动后自动出现在屏幕顶部）
 
 | 按钮 | 功能 | 输入要求 | 实现与对应宏 |
 | :-- | :-- | :-- | :-- |
@@ -95,10 +95,14 @@ title: PM 分支文件 — 本地 Fiji 先行（原项目能力的桌面端实�
 | Invert | 反相 | 同上 | 宏 `03_invert_image.ijm` |
 | Split Channels | RGB 拆通道 | RGB 图或空 | 宏 `04_split_channels.ijm` |
 | Z Projection | Z 投影（Max Intensity） | 栈或空 | 宏 `05_z_projection.ijm` |
-| **Batch TIF** | **B2 批处理（2026-10-25 验收修正版）**：选目录 → 逐 TIFF 处理（默认 Invert）→ 存 `<输入>/out/` → **统计+失败清单弹窗** | TIFF 族目录 | **BeanShell 内建**（真 try/catch：单文件失败不中断——修复宏语言 `open()` 对部分 OME-TIFF 脆弱且无 try/catch 导致的"0 输出"缺陷） |
-| **Open Zarr** | **B3 查看入口**：粘贴/输入 `.ome.zarr` 目录路径 → 调 N5Importer（会弹一次 ImageJ2 确认框，点 OK 即开） | OME-Zarr 目录路径 | 宏内联（`run("HDF5/N5/Zarr/OME-NGFF ...", "n5=[路径]")`） |
+| **Batch TIF** | **B2 批处理（终版：宏+exec+后台引擎）**：选目录 → 后台跑 BS3 已证引擎（全格式+损坏件容错）→ CSV+状态文件，输出 `<输入>/out/` | 任意格式目录 | 宏内联：cfg 传目录 + `exec()` 调 `batch_gui.py`（headless） |
 
-> 已废弃：`06_batch_tif.ijm`（纯宏版批处理）不再挂按钮——宏语言无 try/catch 且 `open()` 对个别 OME-TIFF 直接终止宏（2026-10-25 调试取证：第 2 个文件杀死宏循环）；鲁棒全格式批处理仍走 headless `batch_run.py`。
+> 实现备注（2026-10-25 三次返工教训，登记防复发）：① 本版 Fiji **无 bsh 插件**（Action Bar 的 `<bsh>` 按钮静默死——探针实证 `IJ.runPlugIn("bsh")`=None）；② 宏语言 `open()` 对个别 OME-TIFF 直接终止宏且**无 try/catch**；③ 故按钮只用「宏 + `exec()` 后台脚本」或「纯简单宏」两种形态。纯宏版 `06_batch_tif.ijm` 已停用挂载。
+
+## 9.3b B3 查看（终版：拖拽回转，绕开 N5 栈缺陷）
+
+- **本版 Fiji 的进程内 N5/zarr 打开是死路**（三案取证：N5ZarrReader 构造挂起 ×2、N5Importer 经 CommandService 挂起 ×1；另菜单存在两个近重名命令——`"...NGFF ..."`（单空）实为**导出器**，`"...NGFF ...␣"`（尾空格）才是导入器，调错即得 `getShortTitle() null` NPE，即用户验收所见）。
+- **终版用法**：把 `.ome.zarr` **文件夹拖到桌面「查看Zarr」** → 自动回转 OME-TIFF（raw2ometiff，1–2 分钟/GB）→ 自动在 Fiji 打开。实测：14766 zarr → `14766_view.ome.tif` → 打开 2304×2304 ch2 z1 t100（与源 level0 一致）。
 
 ## 9.2 B2 批处理——两种形态
 
